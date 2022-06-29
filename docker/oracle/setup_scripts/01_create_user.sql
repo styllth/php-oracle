@@ -1,0 +1,8 @@
+-- Script para ciar o usuário no memento da criação do container
+CREATE USER USUARIO IDENTIFIED BY SENHA;
+GRANT CONNECT,
+  RESOURCE,
+  DBA TO USUARIO;
+GRANT UNLIMITED TABLESPACE TO USUARIO;
+ALTER SYSTEM
+SET disk_asynch_io = FALSE SCOPE = SPFILE;
