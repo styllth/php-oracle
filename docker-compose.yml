@@ -1,35 +1,10 @@
 version: '3'
 
 services:
-    oracledb:
-        container_name: oracledb
-        build: ./docker/oracle
-        shm_size: 4096M
-        restart: always
-        volumes:
-            - "oracle_db:/u01/app/oracle/oradata"
-            - "./docker/startup_scripts:/u01/app/oracle/scripts/startup"
-            - "./docker/setup_scripts:/u01/app/oracle/scripts/setup"
-        ports:
-            - 1520:1521
-            - 8079:8080
-        environment:
-            - ORACLE_ALLOW_REMOTE=true
-            - ORACLE_PWD=PWD
-
     php-with-oci8:
         container_name: php_oracle
-        build: ./docker/php
-        depends_on:
-            - oracledb
-        links:
-            - oracledb
+        build: ./docker
         volumes:
             - ./www:/var/www/html
         ports:
-            - "8070:80"
-
-volumes:
-    oracle_db:
-
-
+            - "80:80"

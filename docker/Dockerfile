@@ -9,16 +9,22 @@ RUN apt-get update && apt-get install -y \
   libfreetype6-dev \
   libjpeg62-turbo-dev \
   libpng-dev \
-  libaio1 \
-  && docker-php-ext-install -j$(nproc) iconv gettext \
-  && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-  && docker-php-ext-install -j$(nproc) gd
+  libaio1
+
+# Configure php dependency
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+# Install php dependencies
+RUN docker-php-ext-install \
+  -j$(nproc) gd \
+  -j$(nproc) iconv gettext
 
 COPY docker-php.conf /etc/apache2/conf-enabled/docker-php.conf
 
 RUN printf "log_errors = On \nerror_log = /dev/stderr\n" > /usr/local/etc/php/conf.d/php-logs.ini
 
-RUN a2enmod rewrite
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Oracle instantclient
 ADD instantclient-basiclite-linux.x64-12.2.0.1.0.zip /tmp/
@@ -39,8 +45,17 @@ RUN echo 'umask 002' >> /root/.bashrc
 RUN echo 'instantclient,/usr/local/instantclient' | pecl install oci8
 RUN echo "extension=oci8.so" > /usr/local/etc/php/conf.d/php-oci8.ini
 
-RUN apt-get install nano -y
+# Clear package lists
+RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-RUN echo "<?php echo phpinfo(); ?>" > /var/www/html/phpinfo.php
+# Permissions
+RUN chown -R root:www-data /var/www/html
+RUN chmod u+rwx,g+rx,o+rx /var/www/html
+RUN find /var/www/html -type d -exec chmod u+rwx,g+rx,o+rx {} +
+RUN find /var/www/html -type f -exec chmod u+rw,g+rw,o+r {} +
+
+WORKDIR /var/www/html
+
+RUN a2enmod rewrite
 
 EXPOSE 80
